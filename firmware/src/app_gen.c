@@ -55,7 +55,13 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 #include "app_gen.h"
 #include "Mc32DriverLcd.h"
+#include "Mc32gestSpiDac.h"
 #include "DefMenuGen.h"
+#include "MenuGen.h"
+#include "GesPec12.h"
+#include "GesS9.h"
+#include "Generateur.h"
+#include "Mc32NVMUtil.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -80,9 +86,10 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 APP_GEN_DATA app_genData;
 S_ParamGen LocalParamGen;
-S_ParamGen RemoteParamGen;
 S_ParamGen CheckUpdateParamGen;
+S_ParamGen RemoteParamGen;
 bool usbStat ;
+
 
 // *****************************************************************************
 // *****************************************************************************
@@ -121,9 +128,10 @@ bool usbStat ;
 void APP_GEN_Initialize ( void )
 {
     /* Place the App state machine in its initial state. */
-    app_genData.state = APP_GEN_STATE_INIT;
-    // Synchronisation des parametres
-    RemoteParamGen = LocalParamGen;
+    APP_UpdateState(APP_GEN_STATE_INIT);
+    
+    DRV_TMR0_Initialize();
+    DRV_TMR1_Initialize();
     
     /* TODO: Initialize your application's state machine and other
      * parameters.
@@ -148,13 +156,40 @@ void APP_GEN_Tasks ( void )
         /* Application's initial state. */
         case APP_GEN_STATE_INIT:
         {
+//            lcd_init();
+//            printf_lcd("Hello");
+//            lcd_bl_on();
             lcd_init();
-            printf_lcd("Hello");
-            lcd_bl_on();
-            
-            app_genData.state = APP_GEN_STATE_SERVICE_TASKS;
-        }
 
+            // Init SPI DAC
+            SPI_InitLTC2604();
+
+            // Initialisation PEC12
+            Pec12Init();
+
+            // Initialisation S9
+            S9Init();
+
+            // Initialisation du generateur
+            GENSIG_Initialize(&LocalParamGen);
+
+            // Initialisation du menu
+            MENU_Initialize(&LocalParamGen);
+
+            // Active les timers
+            DRV_TMR0_Start();
+            DRV_TMR1_Start();
+            
+            // Demarrage du generateur de fonction
+//            GENSIG_UpdatePeriode(&LocalParamGen);
+//            GENSIG_UpdateSignal(&LocalParamGen);
+            
+            // Synchronisation des parametres
+            RemoteParamGen = LocalParamGen;
+            APP_UpdateState(APP_GEN_WAIT);
+            break;
+        }
+        
         case APP_GEN_STATE_SERVICE_TASKS:
         {
 //            if (app_genData.newCharReceived == true)
@@ -164,19 +199,19 @@ void APP_GEN_Tasks ( void )
 //                printf_lcd("%c",app_genData.data);
 //            }
             
-            if(usbStat)
-            {
-                MENU_Execute(&RemoteParamGen , false);
-            }
-            else
-            {
-                MENU_Execute(&LocalParamGen, true);
-            }
+//            if(appData.isConfigured)
+//            {
+//                MENU_Execute(&RemoteParamGen , false);
+//            }
+//            else
+//            {
+//                MENU_Execute(&LocalParamGen, true);
+//            }
             
-            BSP_LEDToggle(BSP_LED_2);
-            // Execution du menu
+//            BSP_LEDToggle(BSP_LED_2);
+           // Execution du menu
             CheckUpdateParamGen = LocalParamGen;
-            MENU_Execute(&LocalParamGen);
+            MENU_Execute(&LocalParamGen, 1);
             if((CheckUpdateParamGen.Forme!=LocalParamGen.Forme)||
               (CheckUpdateParamGen.Amplitude!=LocalParamGen.Amplitude)||
               (CheckUpdateParamGen.Offset!=LocalParamGen.Offset))
@@ -187,7 +222,8 @@ void APP_GEN_Tasks ( void )
             {
               GENSIG_UpdatePeriode(&LocalParamGen);
             }
-            
+             APP_UpdateState(APP_GEN_WAIT);
+//            
             break;
         }
         case APP_GEN_WAIT:
@@ -210,6 +246,11 @@ void APP_GEN_DisplayChar(char datas)
 {
     app_genData.newCharReceived = true; 
     app_genData.data = datas;
+}
+
+void APP_UpdateState (APP_GEN_STATES NewState)
+{
+    app_genData.state = NewState;
 }
 
 /*******************************************************************************

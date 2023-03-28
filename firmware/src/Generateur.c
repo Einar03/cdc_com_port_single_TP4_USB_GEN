@@ -13,6 +13,7 @@
 #include "Mc32gestSpiDac.h"
 #include "math.h"
 #include "driver/tmr/drv_tmr_static.h"
+#include "Mc32NVMUtil.h"
 
 // Variables globales
 uint16_t SignalValues[MAX_ECH] = {0};
@@ -21,7 +22,7 @@ uint16_t SignalValues[MAX_ECH] = {0};
 void  GENSIG_Initialize(S_ParamGen *pParam)
 {
     //Recup val mémoire
-    NVM_ReadBlock((uint32_t)pParam, sizeof(*pParam));
+    NVM_ReadBlock((uint32_t*)pParam, sizeof(*pParam));
     if(pParam->Magic != MAGIC)
     {
         // Fréquence par défaut = 20

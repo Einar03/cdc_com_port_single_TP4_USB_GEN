@@ -169,6 +169,8 @@ void APP_GEN_DisplayChar(char datas);
 
 void APP_GEN_Initialize ( void );
 
+void APP_UpdateState ( APP_GEN_STATES NewState);
+
 
 /*******************************************************************************
   Function:

@@ -314,6 +314,7 @@
         <Name dnOrder="0">system_interrupt.c</Name>
         <Path dnOrder="1">Source&amp;#160;Files/app/system_config/pic32mx_usb_sk2_int_dyn</Path>
         <Checksum dnOrder="2">9FF0C82030F4B7095304087251CA8481</Checksum>
+        <ProjectFileChecksum dnOrder="3">D97AD1885A15DBD91AE783D0556248B1</ProjectFileChecksum>
       </Template>
       <Template dnOrder="10">
         <Name dnOrder="0">app.c</Name>

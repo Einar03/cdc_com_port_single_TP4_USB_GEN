@@ -63,6 +63,12 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "app.h"
 #include "app_gen.h"
 #include "system_definitions.h"
+#include "GesPec12.h"
+#include "GesS9.h"
+#include "Generateur.h"
+
+#define INIT_TIME 2999  //Init time in [ms]
+#define MACHINE_CYCLE 10  //Cycle for execution sequence in [ms] 
 
 // *****************************************************************************
 // *****************************************************************************
@@ -70,14 +76,47 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 // *****************************************************************************
 
- 
 
 void __ISR(_TIMER_1_VECTOR, ipl3AUTO) IntHandlerDrvTmrInstance0(void)
 {
+    static uint16_t Timer1Counter = 0;
+    static bool FlagInit = 0;
+
+    if(FlagInit == 0)
+    {
+        if(Timer1Counter <= INIT_TIME)
+        {
+          Timer1Counter++;
+        }
+        else
+        {
+          Timer1Counter = 0;
+          FlagInit = 1;
+        }
+    }
+    else
+    {
+        if(Timer1Counter < (MACHINE_CYCLE-2))
+        {
+          Timer1Counter++;
+        }
+        else
+        {
+          Timer1Counter = 0;
+
+          APP_UpdateState(APP_GEN_STATE_SERVICE_TASKS);
+        }
+        ScanPec12(PEC12_A, PEC12_B, PEC12_PB);
+        ScanS9(S_OK);
+    }
+    //LED1_W = !LED1_R;
     PLIB_INT_SourceFlagClear(INT_ID_0,INT_SOURCE_TIMER_1);
 }
 void __ISR(_TIMER_3_VECTOR, ipl7AUTO) IntHandlerDrvTmrInstance1(void)
 {
+    //LED0_W = 1;
+    GENSIG_Execute();
+    //LED0_W = 0;
     PLIB_INT_SourceFlagClear(INT_ID_0,INT_SOURCE_TIMER_3);
 }
  void __ISR(_USB_1_VECTOR, ipl4AUTO) _IntHandlerUSBInstance0(void)

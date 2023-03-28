@@ -488,7 +488,7 @@ void APP_Tasks (void )
                         &appData.readTransferHandle, appData.readBuffer,
                         APP_READ_BUFFER_SIZE);
                 
-               APP_GEN_DisplayChar(*appData.readBuffer) ;
+               //APP_GEN_DisplayChar(*appData.readBuffer) ;
                 
                 
                 if(appData.readTransferHandle == USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID)
@@ -553,7 +553,7 @@ void APP_Tasks (void )
                     }
                 }
                 
-                APP_GEN_DisplayChar(appData.readBuffer[0]);
+                //APP_GEN_DisplayChar(appData.readBuffer[0]);
                 
                 USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
                         &appData.writeTransferHandle,

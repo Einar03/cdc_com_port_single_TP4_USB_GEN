@@ -21,7 +21,7 @@
 
 bool GetMessage(int8_t *USBReadBuffer, S_ParamGen *pParam, bool *SaveTodo)
 {
-  
+    return 0; 
 } // GetMessage
 
 

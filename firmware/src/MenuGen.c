@@ -7,6 +7,7 @@
 #include <stdint.h>                   
 #include <stdbool.h>
 #include "MenuGen.h" 
+#include "Mc32NVMUtil.h"
 
 S_ParamGen ParamDisplay; //= {SignalSinus, 100, 500, 0};
 
@@ -16,9 +17,9 @@ E_Menu_State menuState = Main_Menu;
 void MENU_Initialize(S_ParamGen *pParam)
 {
     lcd_bl_on();
-	printf_lcd("  Signal Generator");           
+	printf_lcd("  TP4 UsbGen 2022-23");           
     lcd_gotoxy(1,3);
-    printf_lcd("   TP3 MINF 22-23");
+    printf_lcd("   TP4 MINF 22-23");
     lcd_gotoxy(1,4);
     if(pParam -> Magic != MAGIC)
     {
@@ -26,7 +27,7 @@ void MENU_Initialize(S_ParamGen *pParam)
     }
     else
     {
-        printf_lcd("    Alex & Einar");
+        printf_lcd("    Santi & Einar");
     }
     ParamDisplay.Forme = pParam -> Forme;
     ParamDisplay.Frequence = pParam -> Frequence;
@@ -242,7 +243,7 @@ void MENU_Execute(S_ParamGen *pParam, bool local)
             if(S9.LNG == TRUE)
             {
                 pParam -> Magic = MAGIC;
-                NVM_WriteBlock((uint32_t)pParam,sizeof(*pParam));
+                NVM_WriteBlock((uint32_t*)pParam,sizeof(*pParam));
                 saveMenu = SAVED;
                 S9ClearLNG();
             }
