@@ -54,6 +54,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 
 #include "app.h"
+#include "app_gen.h"
 
 
 // *****************************************************************************
@@ -63,6 +64,12 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 // *****************************************************************************
 
 const uint8_t __attribute__((aligned(16))) switchPromptUSB[] = "\r\nPUSH BUTTON PRESSED";
+
+//=========================================================================================================================================
+uint8_t MessageTxt[29] = "!S=TF=2000A=10000O=+5000WP=0#"; // 28 caracteres
+
+bool SendReady = false;
+//=========================================================================================================================================
 
 uint8_t APP_MAKE_BUFFER_DMA_READY readBuffer[APP_READ_BUFFER_SIZE];
 
@@ -244,6 +251,10 @@ void APP_USBDeviceEventHandler ( USB_DEVICE_EVENT event, void * eventData, uintp
 
                 /* Mark that the device is now configured */
                 appData.isConfigured = true;
+                // Set Flag lors de la connexion du USB pour savoir dans app_gen
+                // Si le USB est connecte
+                // =====================================================================================================================
+                SetUsbFlag();
 
             }
             break;
@@ -258,6 +269,10 @@ void APP_USBDeviceEventHandler ( USB_DEVICE_EVENT event, void * eventData, uintp
 
             /* VBUS is not available any more. Detach the device. */
             USB_DEVICE_Detach(appData.deviceHandle);
+            // Set Flag lors de la connexion du USB pour savoir dans app_gen
+            // Si le USB est connecte
+            // ===========================================================================================================================
+            ResetUsbFlag();
             break;
 
         case USB_DEVICE_EVENT_SUSPENDED:
@@ -432,7 +447,7 @@ void APP_Tasks (void )
 {
     /* Update the application state machine based
      * on the current state */
-    int i; 
+//    int i; 
     switch(appData.state)
     {
         case APP_STATE_INIT:
@@ -463,9 +478,17 @@ void APP_Tasks (void )
                 /* If the device is configured then lets start reading */
                 appData.state = APP_STATE_SCHEDULE_READ;
                 
-                //
-                
+//                // Set Flag lors de la connexion du USB pour savoir dans app_gen
+//                // Si le USB est connecte
+//                // ============================================================
+//                SetUsbFlag();
             }
+//            else
+//            {
+//                // Reset Flag lors de la deconnexion du USB
+//                // ============================================================
+//                ResetUsbFlag();
+//            }
             break;
 
         case APP_STATE_SCHEDULE_READ:
@@ -488,7 +511,7 @@ void APP_Tasks (void )
                         &appData.readTransferHandle, appData.readBuffer,
                         APP_READ_BUFFER_SIZE);
                 
-               //APP_GEN_DisplayChar(*appData.readBuffer) ;
+//                APP_GEN_DisplayChar(*appData.readBuffer);
                 
                 
                 if(appData.readTransferHandle == USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID)
@@ -515,6 +538,7 @@ void APP_Tasks (void )
 
             if(appData.isReadComplete || appData.isSwitchPressed)
             {
+//                APP_GEN_DisplayChar(*appData.readBuffer);
                 appData.state = APP_STATE_SCHEDULE_WRITE;
             }
 
@@ -533,33 +557,48 @@ void APP_Tasks (void )
             appData.writeTransferHandle = USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID;
             appData.isWriteComplete = false;
             appData.state = APP_STATE_WAIT_FOR_WRITE_COMPLETE;
-
-            if(appData.isSwitchPressed)
+            
+            //=======================================================================================================
+            if(SendReady)
             {
-                /* If the switch was pressed, then send the switch prompt*/
-                appData.isSwitchPressed = false;
                 USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
-                        &appData.writeTransferHandle, switchPromptUSB, 23,
+                        &appData.writeTransferHandle, MessageTxt, 29,
                         USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+                ResetWriteFlag();
             }
-            else
-            {
-                /* Else echo each received character by adding 1 */
-                for(i=0; i<appData.numBytesRead; i++)
-                {
-                    if((appData.readBuffer[i] != 0x0A) && (appData.readBuffer[i] != 0x0D))
-                    {
-                        appData.readBuffer[i] = appData.readBuffer[i] + 1;
-                    }
-                }
-                
-                //APP_GEN_DisplayChar(appData.readBuffer[0]);
-                
-                USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
-                        &appData.writeTransferHandle,
-                        appData.readBuffer, appData.numBytesRead,
-                        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
-            }
+            //=======================================================================================================
+            
+//            if(appData.isSwitchPressed)
+//            {
+//                /* If the switch was pressed, then send the switch prompt*/
+////                appData.isSwitchPressed = false;
+//////                USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
+//////                        &appData.writeTransferHandle, switchPromptUSB, 23,
+//////                        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+//                
+//                USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
+//                        &appData.writeTransferHandle, MessageTxt, 28,
+//                        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+//            }
+//            else
+//            {
+//                /* Else echo each received character by adding 1 */
+//                for(i=0; i<appData.numBytesRead; i++)
+//                {
+//                    if((appData.readBuffer[i] != 0x0A) && (appData.readBuffer[i] != 0x0D))
+//                    {
+//                        appData.readBuffer[i] = appData.readBuffer[i] + 1;
+//                    }
+//                }
+//                
+            //APP_GEN_DisplayChar(appData.readBuffer[0]);
+////                
+            APP_GEN_ReadDatasFromSerial(appData.readBuffer);
+            USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
+                    &appData.writeTransferHandle,
+                    appData.readBuffer, appData.numBytesRead,
+                    USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+//            }
 
             break;
 
@@ -587,6 +626,28 @@ void APP_Tasks (void )
     }
 }
 
+void SetWriteFlag(void)
+{
+    SendReady = true;
+}
+
+void ResetWriteFlag(void)
+{
+    SendReady = false;
+}
+void APP_UpdateState ( APP_STATES NewState)
+{
+    appData.state = NewState;
+}
+void Update_Message(uint8_t *message)
+{
+    // Variables locales
+    uint8_t i = 0;
+    for(i = 0; i < 28; i++)
+    {
+        MessageTxt[i] = message[i];
+    }
+}
 
 /*******************************************************************************
  End of File

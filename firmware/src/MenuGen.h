@@ -46,6 +46,8 @@
 #define SELECTED 251	// ->| 
 //#define SELECTED 63	// ? (Specification sheet)
 
+#define REMOTE_SYMBOL 206
+
 #define BLANK 32	//Blank caracter DO NOT CHANGE
 
 #define SAVED 45
@@ -53,7 +55,10 @@
 
 #define CONFIRM_TIME 200 //Time out in [10ms] when there's no activity
 
-typedef enum{Wave_Menu = 0, Frequency_Menu, Amplitude_Menu, Offset_Menu, Main_Menu, Save_Menu}E_Menu_State;
+// Enumeration pour la machine d'etat de la gestion du menu
+typedef enum{Wave_Menu = 0, Frequency_Menu, Amplitude_Menu, Offset_Menu, Main_Menu, Save_Menu, Remote_Menu}E_Menu_State;
+// Enumeration pour la machine d'etat pour affchage
+typedef enum{Save = 1, Saved = 45, Cancelled = 46, Remote = 47}E_Save_Menu_State;
 
 S_TacSwitch_Descriptor S9;
 

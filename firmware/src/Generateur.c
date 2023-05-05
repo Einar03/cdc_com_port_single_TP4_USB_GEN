@@ -71,6 +71,7 @@ void  GENSIG_UpdateSignal(S_ParamGen *pParam)
         {
             case SignalSinus:
                 SignalValues[i] = ((float)DAC_Amplitude * sin((float)2 * M_PI * i/(float)MAX_ECH) + 0.5) + DEFAULT_OFFSET;
+                //SignalValues[i] = 65535;
                 break;
             case SignalTriangle:
                 SignalValues[i] = pointValue + 0.5;
@@ -130,7 +131,7 @@ void  GENSIG_Execute(void)
     // Envoie des points du signal au DAC avec le SPI
     SPI_WriteToDac(0, SignalValues[EchNb]);      // sur canal 0
     // Comptage de 0 à 99 avec EchNb
-    EchNb++;
-    EchNb = EchNb % MAX_ECH;
+    //EchNb++;
+    EchNb = (EchNb + 1) % MAX_ECH;
     LED7_W = 0;
 }

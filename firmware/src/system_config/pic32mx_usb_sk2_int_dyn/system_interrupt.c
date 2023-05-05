@@ -104,7 +104,7 @@ void __ISR(_TIMER_1_VECTOR, ipl3AUTO) IntHandlerDrvTmrInstance0(void)
         {
           Timer1Counter = 0;
 
-          APP_UpdateState(APP_GEN_STATE_SERVICE_TASKS);
+          APP_GEN_UpdateState(APP_GEN_STATE_SERVICE_TASKS);
         }
         ScanPec12(PEC12_A, PEC12_B, PEC12_PB);
         ScanS9(S_OK);

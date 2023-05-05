@@ -59,6 +59,9 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "system_config.h"
 #include "system_definitions.h"
 
+
+#define LOCAL true
+#define REMOTE false
 // DOM-IGNORE-BEGIN
 #ifdef __cplusplus  // Provide C++ Compatibility
 
@@ -169,7 +172,7 @@ void APP_GEN_DisplayChar(char datas);
 
 void APP_GEN_Initialize ( void );
 
-void APP_UpdateState ( APP_GEN_STATES NewState);
+void APP_GEN_UpdateState ( APP_GEN_STATES NewState);
 
 
 /*******************************************************************************
@@ -204,6 +207,12 @@ void APP_UpdateState ( APP_GEN_STATES NewState);
 
 void APP_GEN_Tasks( void );
 
+
+void SetUsbFlag(void);
+
+void ResetUsbFlag(void);
+
+void APP_GEN_ReadDatasFromSerial(uint8_t *SerialDatas);
 
 #endif /* _APP_GEN_H */
 
