@@ -8,6 +8,8 @@
 #include <stdbool.h>
 #include "MenuGen.h" 
 #include "Mc32NVMUtil.h"
+#include "Mc32gestI2cSeeprom.h"
+#include "app_gen.h"
 
 S_ParamGen ParamDisplay; //= {SignalSinus, 100, 500, 0};
 
@@ -18,9 +20,9 @@ E_Save_Menu_State saveMenu = FALSE;
 void MENU_Initialize(S_ParamGen *pParam)
 {
     lcd_bl_on();
-	printf_lcd("  TP4 UsbGen 2022-23");           
+	printf_lcd(" TP4 UsbGen 2022-23");           
     lcd_gotoxy(1,2);
-    printf_lcd(" Einar & Santiago");
+    printf_lcd("  Einar & Santiago");
     lcd_gotoxy(1,4);
     if(pParam -> Magic != MAGIC)
     {
@@ -49,11 +51,12 @@ void MENU_Execute(S_ParamGen *pParam, bool local)
     static char cursor[4] = {BLANK, BLANK, BLANK, BLANK};
     uint8_t i;
     
+    
     if(!local)
     {
         menuState = Remote_Menu;
-//        saveMenu = Remote;
     }
+    
     // =========================================================================
     //Manage backlight
     if(Pec12.NoActivity == TRUE)
@@ -132,13 +135,7 @@ void MENU_Execute(S_ParamGen *pParam, bool local)
             {
                 cursor[position] = SELECTED;
                 menuState = position;
-                
-                // ?????????????????????????????????????????????????????????????
-//                ParamDisplay.Forme = pParam -> Forme;
-//                ParamDisplay.Frequence = pParam -> Frequence;
-//                ParamDisplay.Amplitude = pParam -> Amplitude;
-//                ParamDisplay.Offset = pParam -> Offset;
-                // ?????????????????????????????????????????????????????????????
+               
                 
                 //ParamDisplay = ParamGen;
             }
@@ -338,7 +335,7 @@ void MENU_Execute(S_ParamGen *pParam, bool local)
             if(S9.LNG == TRUE)
             {
                 pParam -> Magic = MAGIC;
-                NVM_WriteBlock((uint32_t*)pParam,sizeof(*pParam));
+                I2C_WriteSEEPROM((uint8_t*)pParam, 0x00, 16);
                 saveMenu = SAVED;
                 S9ClearLNG();
             }
@@ -393,7 +390,28 @@ void MENU_Execute(S_ParamGen *pParam, bool local)
         default:
         break;        
     }
-     // =========================================================================
+    // Savegarde en remote
+//    if(GetSaveDataFlagState() == true)
+//    {
+//        I2C_ReadSEEPROM(&ReadParam, 0x00, 16);
+//        if((pParam->Forme != ReadParam.Forme) && (pParam->Frequence != ReadParam.Frequence)
+//            && (pParam->Amplitude != ReadParam.Amplitude) && (pParam->Offset != ReadParam.Offset))
+//        {
+//            I2C_WriteSEEPROM((uint8_t*)pParam, 0x00, 16);
+//            I2C_ReadSEEPROM(&ReadParam, 0x00, 16);
+//            if((pParam->Forme == ReadParam.Forme) && (pParam->Frequence == ReadParam.Frequence)
+//                && (pParam->Amplitude == ReadParam.Amplitude) && (pParam->Offset == ReadParam.Offset))
+//            {
+//                saveMenu = Saved;
+//                SetSavedDataFlag();
+//            }
+//            else
+//            {
+//                saveMenu = Cancelled;
+//            }
+//        }
+//    }
+    // =========================================================================
     //                     Mise a jour des parametres affichees
     // =========================================================================
     switch(saveMenu)
@@ -411,12 +429,7 @@ void MENU_Execute(S_ParamGen *pParam, bool local)
         }
         case Saved:
         {
-            lcd_bl_on();
-            lcd_ClearLine(1);
-            lcd_gotoxy(1,2);
-            printf_lcd("  Parameters Saved  ");
-            lcd_ClearLine(3);
-            lcd_ClearLine(4);
+            MENU_DemandeSave();
             break;
         }
         case Cancelled:
@@ -450,5 +463,10 @@ void MENU_Execute(S_ParamGen *pParam, bool local)
 
 void MENU_DemandeSave(void)
 {
-    
+    lcd_bl_on();
+    lcd_ClearLine(1);
+    lcd_gotoxy(1,2);
+    printf_lcd("#Parameters Saved#");
+    lcd_ClearLine(3);
+    lcd_ClearLine(4);
 }

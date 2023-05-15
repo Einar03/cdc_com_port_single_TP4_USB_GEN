@@ -116,7 +116,7 @@ typedef struct
 {
     /* The application's current state */
     APP_GEN_STATES state;
-    bool newCharReceived;
+    bool newDataReceived;
     char data;
 
     /* TODO: Define any additional data used by the application. */
@@ -211,6 +211,20 @@ void APP_GEN_Tasks( void );
 void SetUsbFlag(void);
 
 void ResetUsbFlag(void);
+
+bool GetUsbFlagState(void);
+
+void SetSaveDataFlag(void);
+
+void ResetSaveDataFlag(void);
+
+bool GetSaveDataFlagState(void);
+
+void SetSavedDataFlag(void);
+
+void ResetSavedDataFlag(void);
+
+bool GetSavedDataFlagState(void);
 
 void APP_GEN_ReadDatasFromSerial(uint8_t *SerialDatas);
 

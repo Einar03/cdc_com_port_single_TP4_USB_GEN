@@ -15,36 +15,35 @@
 // Fonction de reception  d'un  message
 // Met à jour les paramètres du generateur a partir du message recu
 // Format du message
-//  !S=TF=2000A=10000O=+5000D=100WP=0#
-//  !S=PF=2000A=10000O=-5000D=100WP=1#
+//  !S=TF=2000A=10000O=+5000WP=0#
+//  !S=TF=2000A=10000O=-5000WP=1#
 
 
 void GetMessage(uint8_t *USBReadBuffer, S_ParamGen *pParam, bool *SaveTodo)
 {
     // Variable locales
-    uint8_t CharFinded = 0;
     char *PtValue;
-    char CharValue1[1];
-    char CharValue2[4];
-    char CharValue3[5];
+    char CharValue[5];
     
-    // Teste pour chercher dans le buffer
-//    PtValue = strstr((char*)USBReadBuffer, "F=");
-//    PtValue += 2;
-//    strcpy(CharValue1, PtValue);
-    // Controle du format du message
-//    CharFinded = sizeof(USBReadBuffer);
-//    CharValue1[0] = '2';
-    /*(sizeof(USBReadBuffer) == 29) && */
+    // Controle le debut '!' et la fin du message '#'
+    // avant de recuperer les donnees du message
     if((USBReadBuffer[0] == '!') && (USBReadBuffer[28] == '#'))
     {
-        
-//        // Forme du signal
+        // Forme du signal
+        // Pour chercher le texte "S=" dans la chaine de caractères
+        // Retourne la position du début du texte
+        // Exemple pour "S=" :
+        // !S=TF=2000A=10000O=-5000WP=1#
+        // retourne la valeur 1
         PtValue = strstr((char*)USBReadBuffer, "S=");
+        // Incrémenter le pointeur pour se placer au caractère de la forme
         PtValue += 2;
-        strncpy(CharValue1, PtValue, 1);
-//        
-        switch(CharValue1[0])
+        // Récuperation d'un caractère (parametre 3) de la forme dans CharValue
+        strncpy(CharValue, PtValue, 1);
+        
+        // Switch en fonction de la forme récuperée
+        // et sauvegarde dans la structure
+        switch(CharValue[0])
         {
             case 'S':
                 pParam->Forme = SignalSinus;
@@ -59,55 +58,64 @@ void GetMessage(uint8_t *USBReadBuffer, S_ParamGen *pParam, bool *SaveTodo)
                 pParam->Forme = SignalCarre;
                 break;
             default:
-//                pParam->Forme = SignalTriangle;
                 break;
         }
-        PtValue = strstr((char*)USBReadBuffer, "F=");
-        PtValue += 2;
-        strncpy(CharValue2, PtValue, 4);
-        pParam->Frequence = atoi(CharValue2);
+        // Sauvegarde de la valeur de la fréquence
+        pParam->Frequence = SearchAndGetValue((char*)USBReadBuffer, "F=", 4);
         
-        PtValue = strstr((char*)USBReadBuffer, "A=");
-        PtValue += 2;
-        strncpy(CharValue3, PtValue, 5);
-        pParam->Amplitude = atoi(CharValue3);
-      
-        PtValue = strstr((char*)USBReadBuffer, "O=");
-        PtValue += 2;
-        strncpy(CharValue3, PtValue,5);
-        pParam->Offset = atoi(CharValue3);
-       
-//        PtValue = strstr((char*)USBReadBuffer, "W=");
-//        PtValue += 2;
-//        strcpy(CharValue1, PtValue);
+        // Sauvegarde de la valeur de l'amplitude
+        pParam->Amplitude = SearchAndGetValue((char*)USBReadBuffer, "A=", 5);
         
+        // Sauvegarde de la valeur de l'offset
+        pParam->Offset = SearchAndGetValue((char*)USBReadBuffer, "O=", 5);
+        
+        // Recupération de la sauvegarde
+        PtValue = strstr((char*)USBReadBuffer, "WP=");
+        PtValue += 3;
+        // conversion de la valeur de sauvegarde en int 
+        // Si égal 0 save à false sinon true
+        if((atoi(PtValue)) == 0)
+        {
+            *SaveTodo = false;
+        }
+        else
+        {
+            *SaveTodo = true;
+        }
     }
+}
+int16_t SearchAndGetValue(uint8_t *USBReadBuffer, const char *TextToSearch , uint8_t NbCharToGet)
+{
+    // Variable locales
+    char *PtValue;
+    char CharValue[5];
+    // Pour chercher le texte "S=" dans la chaine de caractères
+    // Retourne la position du début du texte
+    // Exemple pour "S=" :
+    // !S=TF=2000A=10000O=-5000WP=1#
+    // retourne la valeur 1
+    PtValue = strstr((char*)USBReadBuffer, TextToSearch);
     
-    
-    
-    // Decodage et recuperation des valeurs du message
-    
-    CharFinded = 15;
-    //return false; 
-} // GetMessage
+    // Incrémenter le pointeur pour se placer au caractère de la forme
+    PtValue = PtValue + (sizeof(TextToSearch)-2);
+    // Récuperation d'un caractère (parametre 3) de la forme dans CharValue
+    strncpy(CharValue, PtValue, NbCharToGet);
+    // retourne la valeur en int de la valeur en string
+    return atoi(CharValue);
+}
 
-
+// GetMessage
 // Fonction d'envoi d'un  message
 // Rempli le tampon d'émission pour USB en fonction des paramètres du générateur
 // Format du message
 // !S=TF=2000A=10000O=+5000D=25WP=0#
 // !S=TF=2000A=10000O=+5000D=25WP=1#    // ack sauvegarde
-
-
-
-void SendMessage(uint8_t *USBSendBuffer, S_ParamGen *pParam, bool Saved )
+void SendMessage(uint8_t *USBSendBuffer, S_ParamGen *pParam, bool *Saved)
 {
     // Varaibles locales
-//    uint8_t i = 0;
     char CharValue[6] = "00000";
-//    char test;
     
-    // Convertions Forme signal en caractere et écriture dans le buffer
+    // Conversion Forme signal en caractere et écriture dans le buffer
     switch(pParam->Forme)
     {
         case SignalSinus:
@@ -137,38 +145,29 @@ void SendMessage(uint8_t *USBSendBuffer, S_ParamGen *pParam, bool Saved )
         }
         
     }
-    // Convertion de la frequence en string et ecriture dans el buffer
+    // Conversion de la frequence en string et ecriture dans el buffer
     sprintf(CharValue, "%04d", pParam->Frequence);
     WriteMessageValue(6,4,USBSendBuffer,CharValue);
-//    for(i = 0; i < 4; i++)
-//    {
-//        USBSendBuffer[i+6] = CharValue[i];
-//    }
     // Convertion de l'amplitude en string et ecriture dans el buffer
     sprintf(CharValue, "%05d", pParam->Amplitude);
     WriteMessageValue(12,5,USBSendBuffer,CharValue);
-//    for(i = 0; i < 5; i++)
-//    {
-//        USBSendBuffer[i+12] = CharValue[i];
-//    }
     // Convertion de l'offset en string et ecriture dans el buffer
-    sprintf(CharValue, "%05d", pParam->Offset);
+    sprintf(CharValue, "%+05d", pParam->Offset);
     WriteMessageValue(19,5,USBSendBuffer,CharValue);
-//    for(i = 0; i < 5; i++)
-//    {
-//        USBSendBuffer[i+19] = CharValue[i];
-//    }
-    if(Saved == true)
+    
+    if(*Saved == true)
     {
-        USBSendBuffer[29] = '1';
+        USBSendBuffer[27] = '1';
     }
     else
     {
-        USBSendBuffer[29] = '0';
+        USBSendBuffer[27] = '0';
     }
-    
+    // Mettre à jour le tableu d'envoi dans app.c pour l'envoyer avec l'USB
     Update_Message(USBSendBuffer);
+    // Forcer l'état de l'USB en mode écriture
     APP_UpdateState(APP_STATE_SCHEDULE_WRITE);
+    // Autoriser l'écriture dans le USB
     SetWriteFlag();
     
     
@@ -183,12 +182,4 @@ void WriteMessageValue(uint8_t Index, uint8_t ValSize, uint8_t *Message, char *V
         Message[i+Index] = Value[i];
     }
 }
-//void FindMessageValue(char Message, uint8_t MsgSize, char MsgValue, char *PtValue)
-//{
-//    // Variables locales
-//    char ReadValue[MsgSize];
-//    
-//    PtValue = strstr((char*)USBReadBuffer, MsgValue);
-//    PtValue += 2;
-//    strcpy(ReadValue, PtValue);
-//}
+

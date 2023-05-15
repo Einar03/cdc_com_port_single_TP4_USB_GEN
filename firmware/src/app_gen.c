@@ -61,8 +61,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "GesPec12.h"
 #include "GesS9.h"
 #include "Generateur.h"
-#include "Mc32NVMUtil.h"
 #include "Mc32gest_SerComm.h"
+#include "Mc32gestI2cSeeprom.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -89,9 +89,11 @@ APP_GEN_DATA app_genData;
 S_ParamGen LocalParamGen;
 S_ParamGen RemoteParamGen;
 S_ParamGen CheckUpdateParamGen;
-S_ParamGen NewParamGen;
-bool UsbConnected ;
 
+S_ParamGen NewParamGen; // Pour récuperation des nouveaux paramètres
+bool UsbConnected ;     // Flag pour l'état de l'USB
+static bool SaveData = false; // Flag pour la sauvegarde en mode remote
+// Tableu pour la réception des données de l'USB (app.c))
 static uint8_t ReceiveMessageString[30] = "!S=CF=1122A=33445O=+5566WP=0#";
 
 // *****************************************************************************
@@ -153,13 +155,8 @@ void APP_GEN_Initialize ( void )
 void APP_GEN_Tasks ( void )
 {
     // Variables locales
-    bool StartSyncRemote = false;
-    bool SaveData = false;
-    static uint8_t MessageString[30] =        "!S=0F=0000A=00000O=+0000WP=0#";
-//    static uint8_t ReceiveMessageString[28] = "!S=CF=1122A=33445O=+5566W=0#";
-    
-    bool test = false;
-    static uint8_t Cnt = 0;
+    // Tableau pour sauvegarder le message à envoyer
+    static uint8_t MessageString[30] = "!S=0F=0000A=00000O=+0000WP=1#";
     
     /* Check the application's current state. */
     switch ( app_genData.state )
@@ -167,12 +164,10 @@ void APP_GEN_Tasks ( void )
         /* Application's initial state. */
         case APP_GEN_STATE_INIT:
         {
-//            lcd_init();
-//            printf_lcd("Hello");
-//            lcd_bl_on();
             lcd_init();
             lcd_init();
-            // Init SPI DAC
+            lcd_bl_on();
+            // Inititalisation du SPI DAC
             SPI_InitLTC2604();
 
             // Initialisation PEC12
@@ -180,22 +175,20 @@ void APP_GEN_Tasks ( void )
 
             // Initialisation S9
             S9Init();
-
+            
+            // Init RTCC
+            I2C_InitMCP79411();
+           
             // Initialisation du generateur
             GENSIG_Initialize(&LocalParamGen);
 
             // Initialisation du menu
             MENU_Initialize(&LocalParamGen);
-
-            
-            
-            // Demarrage du generateur de fonction
-//            GENSIG_UpdatePeriode(&LocalParamGen);
-//            GENSIG_UpdateSignal(&LocalParamGen);
             
             // Synchronisation des parametres remote avec locaux
             RemoteParamGen = LocalParamGen;
             
+            // Demarrage du generateur de fonction
             GENSIG_UpdateSignal(&LocalParamGen);
             APP_GEN_UpdateState(APP_GEN_WAIT);
             
@@ -206,51 +199,26 @@ void APP_GEN_Tasks ( void )
         }
         
         case APP_GEN_STATE_SERVICE_TASKS:
-        {
-//            if (app_genData.newCharReceived == true)
-//            {
-//                app_genData.newCharReceived = false;
-//                lcd_gotoxy(1,2);
-//                printf_lcd("%c",app_genData.data);
-//            }
-            
-            if (app_genData.newCharReceived == true)
+        {   
+            // Si des nouvelles donnees ont ete recues
+            if (app_genData.newDataReceived == true)
             {
-                app_genData.newCharReceived = false;
-                //GetMessage(ReceiveMessageString, &RemoteParamGen, false);
-                //ReceiveMessageString[0] = app_genData.data;
-//                lcd_gotoxy(5,1);
-//                printf_lcd("%c",app_genData.data);
+                app_genData.newDataReceived = false;
+                // Decodage des donnees recues
+                GetMessage(ReceiveMessageString, &RemoteParamGen, &SaveData);
+                if(SaveData == true)
+                {
+                    I2C_WriteSEEPROM(&RemoteParamGen, 0x00, 16);
+                }
+                SendMessage(MessageString, &RemoteParamGen, &SaveData);
             }
-            
-//            if(appData.isConfigured)
-//            {
-//                MENU_Execute(&RemoteParamGen , false);
-//            }
-//            else
-//            {
-//                MENU_Execute(&LocalParamGen, true);
-//            }
-            
-//            BSP_LEDToggle(BSP_LED_2);
-            
-            
-            
-
             // Execution du menu en local ou remote
             // ====================================
             // Si USB connecte => mode remote
-            if(UsbConnected)
+            if(UsbConnected == true)
             {
-                if(StartSyncRemote)
-                {
-                    
-                }
                 MENU_Execute(&RemoteParamGen, REMOTE);
                 NewParamGen = RemoteParamGen;
-//                APP_UpdateState(APP_STATE_SCHEDULE_WRITE);
-//                SetWriteFlag();
-                //SendMessage(MessageString, &NewParamGen, false);
             }
             // Si non mode local
             else
@@ -259,7 +227,8 @@ void APP_GEN_Tasks ( void )
                 NewParamGen = LocalParamGen;
             }
             
-            //MENU_Execute(&LocalParamGen, LOCAL);
+            // Execution du générateur avec les valeurs locales ou remote
+            // Si les données sont différentes, mettre à jour le signal de sortie
             if((CheckUpdateParamGen.Forme!=NewParamGen.Forme)||
               (CheckUpdateParamGen.Amplitude!=NewParamGen.Amplitude)||
               (CheckUpdateParamGen.Offset!=NewParamGen.Offset))
@@ -274,10 +243,6 @@ void APP_GEN_Tasks ( void )
             
             // Sauvegarde des parametres precedents
             CheckUpdateParamGen = NewParamGen;
-            
-            //test = GetMessage(ReceiveMessageString, &NewParamGen, &SaveData);
-            //GetMessage(ReceiveMessageString, &RemoteParamGen, false);
-            SendMessage(MessageString, &NewParamGen, false);
             
             break;
         }
@@ -297,22 +262,12 @@ void APP_GEN_Tasks ( void )
     }
 }
 
-void APP_GEN_DisplayChar(char datas)
-{
-    app_genData.newCharReceived = true; 
-    app_genData.data = datas;
-}
-
 void APP_GEN_ReadDatasFromSerial(uint8_t *SerialDatas)
 {
-//    uint8_t i = 0;
-    
+    // Copie du buffer de l'USB dans le tableu de données
     strncpy((char*)ReceiveMessageString, (char*)SerialDatas, 29);
-    app_genData.newCharReceived = true;
-//    for(i=0;i<2;i++)
-//    {
-//        strncpy((char*)ReceiveMessageString, (char*)SerialDatas, 29);
-//    }
+    // Set flag pour indique la réception d'une nouvelle donnée
+    app_genData.newDataReceived = true;
 }
 
 void APP_GEN_UpdateState (APP_GEN_STATES NewState)
@@ -327,6 +282,10 @@ void SetUsbFlag(void)
 void ResetUsbFlag(void)
 {
     UsbConnected = false;
+}
+bool GetUsbFlagState(void)
+{
+    return UsbConnected;
 }
 /*******************************************************************************
  End of File

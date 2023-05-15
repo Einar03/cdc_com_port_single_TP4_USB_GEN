@@ -81,7 +81,10 @@ void __ISR(_TIMER_1_VECTOR, ipl3AUTO) IntHandlerDrvTmrInstance0(void)
 {
     static uint16_t Timer1Counter = 0;
     static bool FlagInit = 0;
-
+    
+    // =================================
+    //           Initialisation
+    // =================================
     if(FlagInit == 0)
     {
         if(Timer1Counter <= INIT_TIME)
@@ -94,6 +97,9 @@ void __ISR(_TIMER_1_VECTOR, ipl3AUTO) IntHandlerDrvTmrInstance0(void)
           FlagInit = 1;
         }
     }
+    // =================================
+    //           Execution
+    // =================================
     else
     {
         if(Timer1Counter < (MACHINE_CYCLE-2))
@@ -103,11 +109,14 @@ void __ISR(_TIMER_1_VECTOR, ipl3AUTO) IntHandlerDrvTmrInstance0(void)
         else
         {
           Timer1Counter = 0;
-
           APP_GEN_UpdateState(APP_GEN_STATE_SERVICE_TASKS);
         }
-        ScanPec12(PEC12_A, PEC12_B, PEC12_PB);
-        ScanS9(S_OK);
+        // Si USB connecte, arreter la lecture des boutons 
+        if(GetUsbFlagState() == false)
+        {
+            ScanPec12(PEC12_A, PEC12_B, PEC12_PB);
+            ScanS9(S_OK);
+        }
     }
     //LED1_W = !LED1_R;
     PLIB_INT_SourceFlagClear(INT_ID_0,INT_SOURCE_TIMER_1);

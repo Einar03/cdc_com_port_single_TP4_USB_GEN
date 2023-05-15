@@ -270,6 +270,8 @@
         <itemPath>../src/Mc32gestSpiDac.h</itemPath>
         <itemPath>../src/MenuGen.h</itemPath>
         <itemPath>../src/Mc32gest_SerComm.h</itemPath>
+        <itemPath>../src/Mc32_I2cUtilCCS.h</itemPath>
+        <itemPath>../src/Mc32gestI2cSeeprom.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="bsp" projectFiles="true">
         <logicalFolder name="f1" displayName="pic32mx_skes" projectFiles="true">
@@ -722,6 +724,8 @@
         <itemPath>../src/Mc32gestSPiDac.c</itemPath>
         <itemPath>../src/MenuGen.c</itemPath>
         <itemPath>../src/Mc32gest_SerComm.c</itemPath>
+        <itemPath>../src/Mc32_I2cUtilCCS.c</itemPath>
+        <itemPath>../src/Mc32gestI2cSeeprom.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="bsp" projectFiles="true">
         <logicalFolder name="f1" displayName="pic32mx_skes" projectFiles="true">
@@ -3964,6 +3968,7 @@
         <property key="UART6" value="true"/>
         <property key="USB" value="true"/>
         <property key="debugoptions.useswbreakpoints" value="false"/>
+        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="false"/>

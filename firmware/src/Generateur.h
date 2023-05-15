@@ -17,10 +17,10 @@
 
 // Valeurs initiaux pour le générateur
 // SignalSinus, SignalTriangle, SignalDentDeScie, SignalCarre
-#define INIT_FREQ		11
+#define INIT_FREQ		50
 #define INIT_FORM		SignalTriangle
-#define INIT_AMPLITUDE  222
-#define INIT_OFFSET     3333
+#define INIT_AMPLITUDE  200
+#define INIT_OFFSET     0
 #define DEFAULT_OFFSET  32767 //NO TOUCH
 /*----------------------------------------*/
 #define MAX_VAL                  65535

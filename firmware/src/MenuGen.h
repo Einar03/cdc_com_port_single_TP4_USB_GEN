@@ -56,7 +56,7 @@
 #define CONFIRM_TIME 200 //Time out in [10ms] when there's no activity
 
 // Enumeration pour la machine d'etat de la gestion du menu
-typedef enum{Wave_Menu = 0, Frequency_Menu, Amplitude_Menu, Offset_Menu, Main_Menu, Save_Menu, Remote_Menu}E_Menu_State;
+typedef enum{Wave_Menu = 0, Frequency_Menu, Amplitude_Menu, Offset_Menu, Main_Menu, Save_Menu, Remote_Menu, Remote_Save_Menu}E_Menu_State;
 // Enumeration pour la machine d'etat pour affchage
 typedef enum{Save = 1, Saved = 45, Cancelled = 46, Remote = 47}E_Save_Menu_State;
 

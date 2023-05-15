@@ -65,11 +65,12 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 const uint8_t __attribute__((aligned(16))) switchPromptUSB[] = "\r\nPUSH BUTTON PRESSED";
 
-//=========================================================================================================================================
-uint8_t MessageTxt[29] = "!S=TF=2000A=10000O=+5000WP=0#"; // 28 caracteres
-
+//==============================================================================================================================================================
+// Tableau pour l'envoi des données
+uint8_t MessageTxt[30] = "!S=TF=2000A=10000O=+5000WP=0#"; // 29 caracteres
+// Flag pour permettre l'envoi des données
 bool SendReady = false;
-//=========================================================================================================================================
+//==============================================================================================================================================================
 
 uint8_t APP_MAKE_BUFFER_DMA_READY readBuffer[APP_READ_BUFFER_SIZE];
 
@@ -251,9 +252,10 @@ void APP_USBDeviceEventHandler ( USB_DEVICE_EVENT event, void * eventData, uintp
 
                 /* Mark that the device is now configured */
                 appData.isConfigured = true;
+                
                 // Set Flag lors de la connexion du USB pour savoir dans app_gen
-                // Si le USB est connecte
-                // =====================================================================================================================
+                // Si le USB est connecté
+                // ============================================================================================================================
                 SetUsbFlag();
 
             }
@@ -477,18 +479,7 @@ void APP_Tasks (void )
             {
                 /* If the device is configured then lets start reading */
                 appData.state = APP_STATE_SCHEDULE_READ;
-                
-//                // Set Flag lors de la connexion du USB pour savoir dans app_gen
-//                // Si le USB est connecte
-//                // ============================================================
-//                SetUsbFlag();
             }
-//            else
-//            {
-//                // Reset Flag lors de la deconnexion du USB
-//                // ============================================================
-//                ResetUsbFlag();
-//            }
             break;
 
         case APP_STATE_SCHEDULE_READ:
@@ -511,9 +502,6 @@ void APP_Tasks (void )
                         &appData.readTransferHandle, appData.readBuffer,
                         APP_READ_BUFFER_SIZE);
                 
-//                APP_GEN_DisplayChar(*appData.readBuffer);
-                
-                
                 if(appData.readTransferHandle == USB_DEVICE_CDC_TRANSFER_HANDLE_INVALID)
                 {
                     appData.state = APP_STATE_ERROR;
@@ -531,15 +519,19 @@ void APP_Tasks (void )
                 break;
             }
 
-            APP_ProcessSwitchPress();
+//            APP_ProcessSwitchPress();
 
             /* Check if a character was received or a switch was pressed.
              * The isReadComplete flag gets updated in the CDC event handler. */
 
-            if(appData.isReadComplete || appData.isSwitchPressed)
+            if(appData.isReadComplete)//|| appData.isSwitchPressed)
             {
-//                APP_GEN_DisplayChar(*appData.readBuffer);
+//              APP_GEN_DisplayChar(*appData.readBuffer);
                 appData.state = APP_STATE_SCHEDULE_WRITE;
+                //================================================================================================
+                // Envoie des données reçues par l'USB à l'app_gen.c
+                APP_GEN_ReadDatasFromSerial(appData.readBuffer);
+                //================================================================================================
             }
 
             break;
@@ -559,7 +551,9 @@ void APP_Tasks (void )
             appData.state = APP_STATE_WAIT_FOR_WRITE_COMPLETE;
             
             //=======================================================================================================
-            if(SendReady)
+            // Si l'envoi par l'USB est prêt
+            // Envoi de MessageTxt avec les 29 caractères
+            if(SendReady == true)
             {
                 USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
                         &appData.writeTransferHandle, MessageTxt, 29,
@@ -576,10 +570,7 @@ void APP_Tasks (void )
 //////                        &appData.writeTransferHandle, switchPromptUSB, 23,
 //////                        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
 //                
-//                USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
-//                        &appData.writeTransferHandle, MessageTxt, 28,
-//                        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
-//            }
+//           }
 //            else
 //            {
 //                /* Else echo each received character by adding 1 */
@@ -591,13 +582,6 @@ void APP_Tasks (void )
 //                    }
 //                }
 //                
-            //APP_GEN_DisplayChar(appData.readBuffer[0]);
-////                
-            APP_GEN_ReadDatasFromSerial(appData.readBuffer);
-            USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
-                    &appData.writeTransferHandle,
-                    appData.readBuffer, appData.numBytesRead,
-                    USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
 //            }
 
             break;
@@ -635,10 +619,12 @@ void ResetWriteFlag(void)
 {
     SendReady = false;
 }
+// Pour changer l'état de la machine d'état USB et forcer une écriture
 void APP_UpdateState ( APP_STATES NewState)
 {
     appData.state = NewState;
 }
+// Pour copier le message du générateur dans MessageTxt (tableau de app.c)
 void Update_Message(uint8_t *message)
 {
     // Variables locales
