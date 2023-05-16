@@ -390,27 +390,6 @@ void MENU_Execute(S_ParamGen *pParam, bool local)
         default:
         break;        
     }
-    // Savegarde en remote
-//    if(GetSaveDataFlagState() == true)
-//    {
-//        I2C_ReadSEEPROM(&ReadParam, 0x00, 16);
-//        if((pParam->Forme != ReadParam.Forme) && (pParam->Frequence != ReadParam.Frequence)
-//            && (pParam->Amplitude != ReadParam.Amplitude) && (pParam->Offset != ReadParam.Offset))
-//        {
-//            I2C_WriteSEEPROM((uint8_t*)pParam, 0x00, 16);
-//            I2C_ReadSEEPROM(&ReadParam, 0x00, 16);
-//            if((pParam->Forme == ReadParam.Forme) && (pParam->Frequence == ReadParam.Frequence)
-//                && (pParam->Amplitude == ReadParam.Amplitude) && (pParam->Offset == ReadParam.Offset))
-//            {
-//                saveMenu = Saved;
-//                SetSavedDataFlag();
-//            }
-//            else
-//            {
-//                saveMenu = Cancelled;
-//            }
-//        }
-//    }
     // =========================================================================
     //                     Mise a jour des parametres affichees
     // =========================================================================
@@ -466,7 +445,7 @@ void MENU_DemandeSave(void)
     lcd_bl_on();
     lcd_ClearLine(1);
     lcd_gotoxy(1,2);
-    printf_lcd("#Parameters Saved#");
+    printf_lcd("#Parameters Saved# ");
     lcd_ClearLine(3);
     lcd_ClearLine(4);
 }

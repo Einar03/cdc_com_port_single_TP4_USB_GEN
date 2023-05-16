@@ -214,16 +214,6 @@ void ResetUsbFlag(void);
 
 bool GetUsbFlagState(void);
 
-void SetSaveDataFlag(void);
-
-void ResetSaveDataFlag(void);
-
-bool GetSaveDataFlagState(void);
-
-void SetSavedDataFlag(void);
-
-void ResetSavedDataFlag(void);
-
 bool GetSavedDataFlagState(void);
 
 void APP_GEN_ReadDatasFromSerial(uint8_t *SerialDatas);

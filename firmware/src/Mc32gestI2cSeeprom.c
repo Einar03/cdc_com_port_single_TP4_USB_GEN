@@ -75,9 +75,12 @@ void I2C_WriteSEEPROM(void *SrcData, uint32_t EEpromAddr, uint16_t NbBytes)
         // Incrémetation du pointeur de datas pour sélecionnner le prochain byte
         ptByteData++;
         AdresseCnt++;
+        // Si dernier byte de la page
         if((AdresseCnt % 8) == 0)
         {
+            // Faire un stop
             i2c_stop();
+            // Faire un nouveau start avec la première adresse de la page suivante
             do
             {
                 i2c_start();
@@ -126,15 +129,19 @@ void I2C_ReadSEEPROM(void *DstData, uint32_t EEpromAddr, uint16_t NbBytes)
     for ( i = 0 ; i < NbBytes; i++ )
     {
         AdresseCnt++;
-        // si derniere byte envoie d'un Non ack
+        // Si dernier byte envoie d'un Non ack
         if (i == (NbBytes - 1))
         {
             *ptByteData = i2c_read(0); //NO ACK  
         }
+        // Si dernier byte de la page
         else if((AdresseCnt % 8) == 0)
         {
+            // Faire un no ACK
             *ptByteData = i2c_read(0); //NO ACK 
+            // Faire un stop
             i2c_stop();
+            // Faire un nouveau start avec la première adresse de la page suivante
             do{
                 i2c_start();
                 ack = i2c_write(MCP79411_EEPROM_W);        
@@ -142,12 +149,13 @@ void I2C_ReadSEEPROM(void *DstData, uint32_t EEpromAddr, uint16_t NbBytes)
             do{
                 ack = i2c_write(AdresseCnt);
             }while(!ack);
-            
+            // Restart
             do{
                 i2c_reStart();
                 ack = i2c_write(MCP79411_EEPROM_R);
             }while(!ack);
-        }  
+        }
+        // Ecriture d'un byte, envoi d'un ACK
         else
         {
             *ptByteData = i2c_read(1); // ACK

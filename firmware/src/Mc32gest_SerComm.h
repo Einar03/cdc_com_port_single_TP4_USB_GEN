@@ -22,7 +22,7 @@
 
 void SendMessage(uint8_t *USBSendBuffer, S_ParamGen *pParam, bool *Saved);
 
-int16_t SearchAndGetValue(uint8_t *USBReadBuffer, const char *, uint8_t NbCharToGet);
+int16_t SearchAndGetValue(char *USBReadBuffer, const char *, uint8_t NbCharToGet);
 
 void GetMessage(uint8_t *USBReadBuffer, S_ParamGen *pParam, bool *SaveTodo);
 
