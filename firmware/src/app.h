@@ -260,7 +260,7 @@ void APP_Tasks ( void );
 void SetWriteFlag(void);
 void ResetWriteFlag(void);
 void APP_UpdateState ( APP_STATES NewState);
-void Update_Message(uint8_t *message);
+void Update_Message(char *message);
 
 #endif /* _APP_H */
 /*******************************************************************************

@@ -96,9 +96,9 @@ int16_t SearchAndGetValue(char *USBReadBuffer, const char *TextToSearch , uint8_
     // retourne la valeur 1
     PtValue = strstr((char*)USBReadBuffer, TextToSearch);
     
-    // Incrémenter le pointeur pour se placer au caractère de la forme
+    // Incrémenter le pointeur pour se placer au caractère de la valeur
     PtValue = PtValue + (sizeof(TextToSearch)-2);
-    // Récuperation d'un caractère (parametre 3) de la forme dans CharValue
+    // Récuperation des caractères (parametre 3) de la forme dans CharValue
     strncpy(CharValue, PtValue, NbCharToGet);
     // retourne la valeur en int de la valeur en string
     return atoi(CharValue);
@@ -113,58 +113,78 @@ int16_t SearchAndGetValue(char *USBReadBuffer, const char *TextToSearch , uint8_
 void SendMessage(uint8_t *USBSendBuffer, S_ParamGen *pParam, bool *Saved)
 {
     // Varaibles locales
-    char CharValue[6] = "00000";
+    char CharValue[6] = "ABCDEF";
+    char *PtValue;
     
+    PtValue = strstr((char*)USBSendBuffer, "CCT=");
+    PtValue += 4;
     // Conversion Forme signal en caractere et écriture dans le buffer
     switch(pParam->Forme)
     {
         case SignalSinus:
         {
-            USBSendBuffer[3] = 'S';
+//            USBSendBuffer[3] = 'S';
+            strncpy(PtValue, "Sinu", 4);
             break;
         }
         case SignalTriangle:
         {
-            USBSendBuffer[3] = 'T';
+//            USBSendBuffer[3] = 'T';
+//            strncpy(PtValue, (char*)CharValue, 4);
+            strncpy(PtValue, "Tria", 4);
             break;
         }
         case SignalDentDeScie:
         {
-            USBSendBuffer[3] = 'D';
+//            USBSendBuffer[3] = 'D';
+            strncpy(PtValue, "Dent", 4);
             break;
         }
         case SignalCarre:
         {
-            USBSendBuffer[3] = 'C';
+//            USBSendBuffer[3] = 'C';
+            strncpy(PtValue, "Carr", 4);
             break;
         }
         default:
         {
-            USBSendBuffer[3] = '0';
+//            USBSendBuffer[3] = '0';
             break;
         }
         
     }
+    PtValue = strstr((char*)USBSendBuffer, "LO=");
+    PtValue += 3;
     // Conversion de la frequence en string et ecriture dans el buffer
     sprintf(CharValue, "%04d", pParam->Frequence);
-    WriteMessageValue(6,4,USBSendBuffer,CharValue);
+//    WriteMessageValue(6,4,USBSendBuffer,CharValue);
+    strncpy(PtValue, (char*)CharValue, 4);
+    
+    PtValue = strstr((char*)USBSendBuffer, "CRI=");
+    PtValue += 4;
     // Convertion de l'amplitude en string et ecriture dans el buffer
     sprintf(CharValue, "%05d", pParam->Amplitude);
-    WriteMessageValue(12,5,USBSendBuffer,CharValue);
+//    WriteMessageValue(12,5,USBSendBuffer,CharValue);
+    strncpy(PtValue, (char*)CharValue, 3);
+    
+    PtValue = strstr((char*)USBSendBuffer, "LUX=");
+    PtValue += 4;
     // Convertion de l'offset en string et ecriture dans el buffer
     sprintf(CharValue, "%+05d", pParam->Offset);
-    WriteMessageValue(19,5,USBSendBuffer,CharValue);
+//    WriteMessageValue(19,5,USBSendBuffer,CharValue);
+    strncpy(PtValue, (char*)CharValue, 4);
     
-    if(*Saved == true)
-    {
-        USBSendBuffer[27] = '1';
-    }
-    else
-    {
-        USBSendBuffer[27] = '0';
-    }
+    
+//    if(*Saved == true)
+//    {
+//        USBSendBuffer[27] = '1';
+//    }
+//    else
+//    {
+//        USBSendBuffer[27] = '0';
+//    }
     // Mettre à jour le tableu d'envoi dans app.c pour l'envoyer avec l'USB
-    Update_Message(USBSendBuffer);
+    Update_Message((char*)USBSendBuffer);
     // Forcer l'état de l'USB en mode écriture
     APP_UpdateState(APP_STATE_SCHEDULE_WRITE);
     // Autoriser l'écriture dans le USB
@@ -182,4 +202,18 @@ void WriteMessageValue(uint8_t Index, uint8_t ValSize, uint8_t *Message, char *V
         Message[i+Index] = Value[i];
     }
 }
+
+//void addValues(uint8_t *Tab, uint8_t *SignalData, uint8_t DataLenght)
+//{
+//    int i;
+//    char CharValue[15] = "";
+//    
+//    for (i = 0; i < DataLenght; i++)
+//    {
+//        sprintf(CharValue, "@%d=", (i+1));
+//        strcat((char*)Tab, );
+//        strcat((char*)Tab, );
+//    }
+//
+//}
 

@@ -4,7 +4,7 @@
   Company:
     Microchip Technology Inc.
   
-  File Name:
+  File Name: 
     app.c
 
   Summary:
@@ -56,7 +56,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "app.h"
 #include "app_gen.h"
 
-
+#define NB_DATA_TO_SEND 95
 // *****************************************************************************
 // *****************************************************************************
 // Section: Global Data Definitions
@@ -67,7 +67,8 @@ const uint8_t __attribute__((aligned(16))) switchPromptUSB[] = "\r\nPUSH BUTTON 
 
 //==============================================================================================================================================================
 // Tableau pour l'envoi des données
-uint8_t MessageTxt[30] = "!S=TF=2000A=10000O=+5000WP=0#"; // 29 caracteres
+//uint8_t MessageTxt[30] = "!S=TF=2000A=10000O=+5000WP=0#"; // 29 caracteres
+uint8_t MessageTxt[NB_DATA_TO_SEND] = "!CCT=1111LO=2222CRI=333LUX=4444ITime=5555";
 // Flag pour permettre l'envoi des données
 bool SendReady = false;
 //==============================================================================================================================================================
@@ -449,7 +450,7 @@ void APP_Tasks (void )
 {
     /* Update the application state machine based
      * on the current state */
-//    int i; 
+    int i; 
     switch(appData.state)
     {
         case APP_STATE_INIT:
@@ -553,36 +554,36 @@ void APP_Tasks (void )
             //=======================================================================================================
             // Si l'envoi par l'USB est prêt
             // Envoi de MessageTxt avec les 29 caractères
-            if(SendReady == true)
-            {
-                USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
-                        &appData.writeTransferHandle, MessageTxt, 29,
-                        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
-                ResetWriteFlag();
-            }
+//            if(SendReady == true)
+//            {
+//                USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
+//                        &appData.writeTransferHandle, MessageTxt, NB_DATA_TO_SEND, //29
+//                        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+//                ResetWriteFlag();
+//            }
             //=======================================================================================================
             
-//            if(appData.isSwitchPressed)
-//            {
-//                /* If the switch was pressed, then send the switch prompt*/
-////                appData.isSwitchPressed = false;
-//////                USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
-//////                        &appData.writeTransferHandle, switchPromptUSB, 23,
-//////                        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
-//                
-//           }
-//            else
-//            {
-//                /* Else echo each received character by adding 1 */
-//                for(i=0; i<appData.numBytesRead; i++)
-//                {
-//                    if((appData.readBuffer[i] != 0x0A) && (appData.readBuffer[i] != 0x0D))
-//                    {
-//                        appData.readBuffer[i] = appData.readBuffer[i] + 1;
-//                    }
-//                }
-//                
-//            }
+            if(appData.isSwitchPressed)
+            {
+                /* If the switch was pressed, then send the switch prompt*/
+                appData.isSwitchPressed = false;
+                USB_DEVICE_CDC_Write(USB_DEVICE_CDC_INDEX_0,
+                        &appData.writeTransferHandle, switchPromptUSB, 23,
+                        USB_DEVICE_CDC_TRANSFER_FLAGS_DATA_COMPLETE);
+                
+           }
+            else
+            {
+                /* Else echo each received character by adding 1 */
+                for(i=0; i<appData.numBytesRead; i++)
+                {
+                    if((appData.readBuffer[i] != 0x0A) && (appData.readBuffer[i] != 0x0D))
+                    {
+                        appData.readBuffer[i] = appData.readBuffer[i] + 1;
+                    }
+                }
+                
+            }
 
             break;
 
@@ -625,14 +626,15 @@ void APP_UpdateState ( APP_STATES NewState)
     appData.state = NewState;
 }
 // Pour copier le message du générateur dans MessageTxt (tableau de app.c)
-void Update_Message(uint8_t *message)
+void Update_Message(char *message)
 {
     // Variables locales
-    uint8_t i = 0;
-    for(i = 0; i < 28; i++)
-    {
-        MessageTxt[i] = message[i];
-    }
+//    uint8_t i = 0;
+//    for(i = 0; i < 28; i++)
+//    {
+//        MessageTxt[i] = message[i];
+//    }
+    strncpy((char*)MessageTxt, (char*)message, NB_DATA_TO_SEND);
 }
 
 /*******************************************************************************

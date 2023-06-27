@@ -156,8 +156,10 @@ void APP_GEN_Tasks ( void )
 {
     // Variables locales
     // Tableau pour sauvegarder le message à envoyer
-    static uint8_t MessageString[30] = "!S=0F=0000A=00000O=+0000WP=1#";
-    
+//    static uint8_t MessageString[30] = "!S=0F=0000A=00000O=+0000WP=1#";
+    static uint16_t cntSend = 0;
+//    static uint8_t MessageString[43] = "!CCT=0000LO=0000CRI=000LUX=0000ITime=0000#";
+    static uint8_t MessageString[95] = "!CCT=0000LO=0000CRI=000LUX=0000ITime=0000@001=0.002500@002=0.005000@003=0.007500@004=0.010000#";
     /* Check the application's current state. */
     switch ( app_genData.state )
     {
@@ -199,7 +201,8 @@ void APP_GEN_Tasks ( void )
         }
         
         case APP_GEN_STATE_SERVICE_TASKS:
-        {   
+        {
+            cntSend = (cntSend + 1) % 500;
             // Si des nouvelles donnees ont ete recues
             if (app_genData.newDataReceived == true)
             {
@@ -215,18 +218,19 @@ void APP_GEN_Tasks ( void )
             // Execution du menu en local ou remote
             // ====================================
             // Si USB connecte => mode remote
-            if(UsbConnected == true)
-            {
-                MENU_Execute(&RemoteParamGen, REMOTE);
-                NewParamGen = RemoteParamGen;
-            }
-            // Si non mode local
-            else
-            {
-                MENU_Execute(&LocalParamGen, LOCAL);
-                NewParamGen = LocalParamGen;
-            }
-            
+//            if(UsbConnected == true)
+//            {
+//                MENU_Execute(&RemoteParamGen, REMOTE);
+//                NewParamGen = RemoteParamGen;
+//            }
+//            // Si non mode local
+//            else
+//            {
+//                MENU_Execute(&LocalParamGen, LOCAL);
+//                NewParamGen = LocalParamGen;
+//            }
+            MENU_Execute(&LocalParamGen, LOCAL);
+            NewParamGen = LocalParamGen;
             // Execution du générateur avec les valeurs locales ou remote
             // Si les données sont différentes, mettre à jour le signal de sortie
             if((CheckUpdateParamGen.Forme!=NewParamGen.Forme)||
@@ -240,7 +244,13 @@ void APP_GEN_Tasks ( void )
                 GENSIG_UpdatePeriode(&NewParamGen);
             }
             APP_GEN_UpdateState(APP_GEN_WAIT);
-            
+            if(UsbConnected == true)
+            {
+                if(cntSend == 0)
+                {
+                    SendMessage(MessageString, &LocalParamGen, &SaveData);
+                }
+            }
             // Sauvegarde des parametres precedents
             CheckUpdateParamGen = NewParamGen;
             
